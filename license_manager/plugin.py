@@ -61,24 +61,29 @@ hooks.Filters.CONFIG_OVERRIDES.add_items(
 # INITIALIZATION TASKS
 ########################################
 
-# To run the script from templates/license_manager/tasks/myservice/init, add:
-hooks.Filters.COMMANDS_INIT.add_item((
-        "mysql",
-        ("license_manager", "tasks", "mysql", "init"),
- ))
+# In Tutor, COMMANDS_INIT was removed. We now use CLI_DO_INIT_TASKS instead
+# and feed it the contents of our init scripts from the templates directory.
 
-hooks.Filters.COMMANDS_INIT.add_item(
-    (
-        "lms",
-        ("license_manager", "tasks", "lms", "init"),
+def _add_init_task(service: str, *relpath: str) -> None:
+    """
+    Helper: read a shell script from the plugin templates and register it
+    as an init task for the given service.
+    """
+    task_path = os.path.join(
+        pkg_resources.resource_filename("license_manager", "templates"),
+        *relpath,
     )
-)
-hooks.Filters.COMMANDS_INIT.add_item(
-    (
-        "license-manager",
-        ("license_manager", "tasks", "license_manager", "init"),
-    )
-)
+    with open(task_path, encoding="utf-8") as task_file:
+        hooks.Filters.CLI_DO_INIT_TASKS.add_item((service, task_file.read()))
+
+# To run the script from templates/license_manager/tasks/myservice/init, add:
+# These correspond to:
+#   templates/license_manager/tasks/mysql/init
+#   templates/license_manager/tasks/lms/init
+#   templates/license_manager/tasks/license_manager/init
+_add_init_task("mysql", "license_manager", "tasks", "mysql", "init")
+_add_init_task("lms", "license_manager", "tasks", "lms", "init")
+_add_init_task("license-manager", "license_manager", "tasks", "license_manager", "init")
 
 ########################################
 # DOCKER IMAGE MANAGEMENT
