@@ -124,10 +124,22 @@ ENV LICENSE_MANAGER_CFG /openedx/config.yml
 
 {{ patch("license-manager-dockerfile-pre-assets") }}
 
+# --------------------------------------------------------------------------
 # Collect static assets (aka: "make static")
-COPY --chown=app:app assets.py ./license_manager/settings/assets.py
-ENV DJANGO_SETTINGS_MODULE license_manager.settings.assets
-RUN python3 manage.py collectstatic --noinput
+# Updated by: Cannon Smith
+# Updated on: 2025-11-21
+#
+# IMPORTANT:
+# - During image build, only the repository settings exist.
+# - Tutor-generated settings (license_manager.settings.tutor.*) are NOT
+#   available yet, so we cannot import them here.
+#
+# Therefore we run collectstatic using license_manager.settings.production,
+# which lives in the cloned repo. At runtime, Tutor will override
+# DJANGO_SETTINGS_MODULE as needed.
+# --------------------------------------------------------------------------
+RUN DJANGO_SETTINGS_MODULE=license_manager.settings.production \
+    python3 manage.py collectstatic --noinput
 
 ENV DJANGO_SETTINGS_MODULE license_manager.settings.tutor.production
 

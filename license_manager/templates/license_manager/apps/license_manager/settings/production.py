@@ -2,6 +2,21 @@ from license_manager.settings.production import * # pylint: disable=wildcard-imp
 
 {% include "license_manager/apps/license_manager/settings/partials/common.py" %}
 
+# -------------------------------------------------------------------
+# Static files / WhiteNoise configuration
+# Updated by: Cannon Smith
+# Updated on: 2025-11-21
+#
+# MIDDLEWARE comes from base settings as a tuple, so we rebuild it
+# to insert WhiteNoise right after SecurityMiddleware.
+# -------------------------------------------------------------------
+MIDDLEWARE = ("whitenoise.middleware.WhiteNoiseMiddleware",) + tuple(MIDDLEWARE)
+
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+
+# -------------------------------------------------------------------
+# CORS / CSRF / OAuth config for Tutor
+# -------------------------------------------------------------------
 # FIX NOTE: confirm whether License Manager uses MFE.
 CORS_ORIGIN_WHITELIST = list(CORS_ORIGIN_WHITELIST) + [
     "{% if ENABLE_HTTPS %}https{% else %}http{% endif %}://{{ MFE_HOST }}",
