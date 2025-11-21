@@ -57,7 +57,7 @@ RUN mkdir -p /openedx/license_manager && \
 WORKDIR /openedx/license_manager
 
 ###### Install python requirements in virtualenv
-FROM python as python-requirements
+FROM python AS python-requirements
 ENV PATH /openedx/venv/bin:${PATH}
 ENV VIRTUAL_ENV /openedx/venv/
 
@@ -81,8 +81,9 @@ RUN ls -lha
 RUN pip install -r requirements/pip.txt
 RUN pip install -r requirements/production.txt
 
-# Ensure Gunicorn is available as our WSGI server
-RUN pip install "gunicorn==21.2.0"
+# Cannon Smith – updated 2025-11-21:
+# Use gunicorn instead of uwsgi and add WhiteNoise to serve static files from /openedx/staticfiles.
+RUN pip install "gunicorn==21.2.0" "whitenoise==6.7.0"
 
 COPY ./requirements/ /openedx/requirements
 RUN cd /openedx/requirements/ \
@@ -90,7 +91,7 @@ RUN cd /openedx/requirements/ \
   && pip install -r ./private.txt
 
 ###### Production image with system and python requirements
-FROM minimal as production
+FROM minimal AS production
 
 # Install system requirements.
 # Mcdaniel: many of these probably are not necessary. i copied the list from the openedx build. there's almost certainly some
@@ -135,7 +136,7 @@ ENV DJANGO_SETTINGS_MODULE license_manager.settings.tutor.production
 EXPOSE 8000
 
 ###### Final image with production cmd
-FROM production as final
+FROM production AS final
 
 # Run server with Gunicorn instead of uWSGI
 CMD gunicorn \
