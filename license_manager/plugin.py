@@ -61,7 +61,7 @@ hooks.Filters.CONFIG_OVERRIDES.add_items(
 # INITIALIZATION TASKS
 ########################################
 
-# In Tutor, COMMANDS_INIT was removed. We now use CLI_DO_INIT_TASKS instead
+# In Tutor v16, COMMANDS_INIT was removed. We now use CLI_DO_INIT_TASKS instead
 # and feed it the contents of our init scripts from the templates directory.
 
 def _add_init_task(service: str, *relpath: str) -> None:
