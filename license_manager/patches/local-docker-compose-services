@@ -2,6 +2,7 @@ license-manager:
   image: {{ LICENSE_MANAGER_DOCKER_IMAGE }}
   environment:
     DJANGO_SETTINGS_MODULE: license_manager.settings.tutor.production
+    SERVICE_VARIANT: license_manager
   restart: unless-stopped
   volumes:
     - ../plugins/license_manager/apps/license_manager/settings:/openedx/license_manager/license_manager/settings/tutor:ro
