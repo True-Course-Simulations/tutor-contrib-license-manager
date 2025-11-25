@@ -1,5 +1,6 @@
+{% set LICENSE_MANAGER_IMAGE = LICENSE_MANAGER_DOCKER_IMAGE or LICENSE_MANAGER_BUILT_IMAGE %}
 license-manager-job:
-    image: {{ LICENSE_MANAGER_DOCKER_IMAGE }}
+    image: {{ LICENSE_MANAGER_IMAGE }}
     environment:
       DJANGO_SETTINGS_MODULE: license_manager.settings.tutor.production
     volumes:

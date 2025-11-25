@@ -1,3 +1,4 @@
+{% set LICENSE_MANAGER_IMAGE = LICENSE_MANAGER_DOCKER_IMAGE or LICENSE_MANAGER_BUILT_IMAGE %}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -19,7 +20,7 @@ spec:
         runAsGroup: 1000
       containers:
         - name: license-manager
-          image: {{ LICENSE_MANAGER_DOCKER_IMAGE }}
+          image: {{ LICENSE_MANAGER_IMAGE }}
           ports:
             - containerPort: 8000
           env:
