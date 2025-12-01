@@ -5,14 +5,27 @@ from license_manager.settings.production import * # pylint: disable=wildcard-imp
 # -------------------------------------------------------------------
 # Static files / WhiteNoise configuration
 # Updated by: Cannon Smith
-# Updated on: 2025-11-21
-#
 # MIDDLEWARE comes from base settings as a tuple, so we rebuild it
 # to insert WhiteNoise right after SecurityMiddleware.
 # -------------------------------------------------------------------
-MIDDLEWARE = ("whitenoise.middleware.WhiteNoiseMiddleware",) + tuple(MIDDLEWARE)
+# Insert WhiteNoise right after SecurityMiddleware (recommended order)
+MIDDLEWARE = list(MIDDLEWARE)
+try:
+    security_index = MIDDLEWARE.index("django.middleware.security.SecurityMiddleware")
+except ValueError:
+    # Fallback: if for some reason SecurityMiddleware isn't present,
+    # put WhiteNoise at the front but after we converted to list.
+    security_index = -1
 
-STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+MIDDLEWARE.insert(security_index + 1, "whitenoise.middleware.WhiteNoiseMiddleware")
+MIDDLEWARE = tuple(MIDDLEWARE)
+
+# For now, avoid manifest-based storage to get rid of
+# "Missing staticfiles manifest entry" errors.
+STATICFILES_STORAGE = "whitenoise.storage.CompressedStaticFilesStorage"
+
+# Let WhiteNoise fall back to Django finders (fine for dev)
+WHITENOISE_USE_FINDERS = True
 
 # -------------------------------------------------------------------
 # CORS / CSRF / OAuth config for Tutor

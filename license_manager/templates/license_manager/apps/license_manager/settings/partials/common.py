@@ -34,7 +34,7 @@ LANGUAGE_COOKIE_NAME = 'license_manager_language'
 # END COOKIE CONFIGURATION
 
 CSRF_COOKIE_SECURE = False
-CSRF_TRUSTED_ORIGINS = []
+#CSRF_TRUSTED_ORIGINS = []
 
 # Set these to the correct values for your OAuth2 provider (e.g., LMS)
 SOCIAL_AUTH_EDX_OAUTH2_KEY = 'license-manager-sso-key'
@@ -99,7 +99,8 @@ DATABASES = {
 }
 
 # reconfigure logging and Get rid of local logger
-LOGGING = get_logger_config(debug=False, dev_env=True)
+#LOGGING = get_logger_config(debug=False, dev_env=True)
+LOGGING = get_logger_config(debug=False)
 
 # mcdaniel aug-2022: currently there is no 'local' handler, but
 # most open edx module have this, so we'll keep this snippet
