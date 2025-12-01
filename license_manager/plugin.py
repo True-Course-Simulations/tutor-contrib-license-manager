@@ -13,10 +13,19 @@ from .__about__ import __version__
 
 hooks.Filters.CONFIG_DEFAULTS.add_items(
     [
+        # Where to push/pull images
+        ("DOCKER_REGISTRY", ""),
+        ("DOCKER_IMAGE_PREFIX", ""),
+
         # Where to clone license-manager from when we build it ourselves
         ("LICENSE_MANAGER_REPOSITORY", "https://github.com/openedx/license-manager.git"),
+
         # Tag we use when the plugin builds the image
-        ("LICENSE_MANAGER_BUILT_IMAGE", "{{ DOCKER_REGISTRY }}{{ DOCKER_IMAGE_PREFIX }}license-manager:{{ OPENEDX_COMMON_VERSION }}"),
+        # NOTE: Docker tags cannot contain '/', so we sanitize the version.
+        (
+            "LICENSE_MANAGER_BUILT_IMAGE",
+            "{{ DOCKER_REGISTRY }}{{ DOCKER_IMAGE_PREFIX }}license-manager:{{ OPENEDX_COMMON_VERSION | replace('/', '-') }}",
+        ),
 
         # Optional external image. If empty => we build LICENSE_MANAGER_BUILT_IMAGE.
         ("LICENSE_MANAGER_DOCKER_IMAGE", ""),
