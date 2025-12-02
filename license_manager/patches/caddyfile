@@ -4,12 +4,18 @@
         max_size 10MB
     }
 
-    # Force Django admin login to go through LMS SSO
-    @adminLogin path /admin/login /admin/login/
-    handle @adminLogin {
-        # Send users to the social-auth login view instead of the raw Django admin login
-        redir /login?next=/admin/ 302
-    }
+    # 1) Redirect ONLY "/" to /login (SSO entry)
+    @root path /
+    redir @root /login 302
 
+    # 2) If Django bounced /admin → /admin/login?next=/admin/
+    #    send them through SSO instead of showing the local admin login page.
+    @adminLoginSSO {
+        path /admin/login
+        query next=/admin/
+    }
+    redir @adminLoginSSO /login?next=/admin/ 302
+
+    # 3) Everything else goes straight to license-manager (including /admin, /admin/login without next, APIs)
     import proxy "license-manager:8000"
 }
