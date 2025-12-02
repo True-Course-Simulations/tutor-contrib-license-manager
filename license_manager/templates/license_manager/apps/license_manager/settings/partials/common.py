@@ -73,7 +73,7 @@ SOCIAL_AUTH_REDIRECT_IS_HTTPS = {% if ENABLE_HTTPS %}True{% else %}False{% endif
 SOCIAL_AUTH_EDX_OAUTH2_ISSUER = "{% if ENABLE_HTTPS %}https{% else %}http{% endif %}://{{ LMS_HOST }}"
 SOCIAL_AUTH_EDX_OAUTH2_URL_ROOT = "http://lms:8000"
 
-SOCIAL_AUTH_EDX_OAUTH2_KEY = "license-manager-sso-key"
+SOCIAL_AUTH_EDX_OAUTH2_KEY = "license-manager-key-sso"
 SOCIAL_AUTH_EDX_OAUTH2_SECRET = "license-manager-sso-secret"
 SOCIAL_AUTH_EDX_OAUTH2_LOGOUT_URL = SOCIAL_AUTH_EDX_OAUTH2_ISSUER + "/logout"
 BACKEND_SERVICE_EDX_OAUTH2_KEY = "license-manager-backend-service-key"
