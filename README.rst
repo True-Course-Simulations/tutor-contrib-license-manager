@@ -45,8 +45,9 @@ This plugin provides the following build and deployment services:
 - automated MySQL integration, including creation and migration of the database itself, mysql service account and any permissions
 - automated oauth setup using the LMS as the oauth provider
 - fully automated Kubernetes deployment
-- TO DO: add syncronization of MySQL user accounts
-- TO DO: add creation of an admin account
+- SSO-friendly routing that redirects ``/`` and admin login flows to LMS SSO
+- management commands to create or promote License Manager superadmin users
+- TO DO: add synchronization of MySQL user accounts
 
 Installation and Usage
 ----------------------------
@@ -91,6 +92,27 @@ This plugins is compatible with `Kubernetes integration <http://docs.tutor.overh
     tutor k8s quickstart
 
 
+License Manager admin users
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Use the bundled management commands inside the License Manager service to create or promote superadmins. Examples for local Tutor:
+
+.. code-block:: shell
+
+    # Create or update a superadmin (SSO-only login)
+    tutor local run license-manager ./manage.py create_license_manager_superadmin \
+        --username dev --email dev@example.com --no-password
+
+    # Create a superadmin with a local password
+    tutor local run license-manager ./manage.py create_license_manager_superadmin \
+        --username licadmin --email licadmin@example.com --password 'SomeStrongPassword123'
+
+    # Promote an existing SSO user after their first login
+    tutor local run license-manager ./manage.py promote_license_manager_superadmin \
+        --username dev --email dev@example.com
+
+Omit arguments to be prompted interactively. In Kubernetes environments, replace ``tutor local run`` with the equivalent ``tutor k8s exec license-manager --`` command. Caddy now redirects ``/`` and the Django admin login flow to ``/login``, ensuring admin access always goes through LMS SSO.
+
 Github Actions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -130,19 +152,16 @@ Optional parameters
 - LICENSE_MANAGER_HOST (default: subscriptions.{{ LMS_HOST }})
 - LICENSE_MANAGER_MYSQL_DATABASE (default: license_manager)
 - LICENSE_MANAGER_MYSQL_USERNAME (default: license_manager)
+- LICENSE_MANAGER_MYSQL_PASSWORD (default {{ 8|random_string }})
 - LICENSE_MANAGER_OAUTH2_KEY (default: license-manager-key)
 - LICENSE_MANAGER_OAUTH2_KEY_DEV (default: license-manager-key-dev)
 - LICENSE_MANAGER_OAUTH2_KEY_SSO (default: license-manager-key-sso)
 - LICENSE_MANAGER_OAUTH2_KEY_SSO_DEV (default: license-manager-key-sso-dev)
-- LICENSE_MANAGER_MYSQL_PASSWORD (default {{ 8|random_string }})
-- LICENSE_MANAGER_OAUTH2_SECRET (default: {{ 16|random_string }})
 - LICENSE_MANAGER_SECRET_KEY (default: {{ 24|random_string }})
-- LICENSE_MANAGER_SOCIAL_AUTH_EDX_OAUTH2_SECRET (default: {{ 16|random_string }})
-- LICENSE_MANAGER_BACKEND_SERVICE_EDX_OAUTH2_SECRET (default: {{ 16|random_string }})
 - LICENSE_MANAGER_OAUTH2_SECRET (default: {{ 16|random_string }})
 - LICENSE_MANAGER_OAUTH2_SECRET_DEV (default: {{ 16|random_string }})
 - LICENSE_MANAGER_OAUTH2_SECRET_SSO (default: {{ 16|random_string }})
-- LICENSE_MANAGER_OAUTH2_SECRET_SSO_DEV (default: {{ 16|random_string }}
+- LICENSE_MANAGER_OAUTH2_SECRET_SSO_DEV (default: {{ 16|random_string }})
 
 License
 ------------
