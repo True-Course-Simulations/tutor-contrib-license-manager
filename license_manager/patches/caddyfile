@@ -3,5 +3,13 @@
     request_body {
         max_size 10MB
     }
+
+    # Force Django admin login to go through LMS SSO
+    @adminLogin path /admin/login /admin/login/
+    handle @adminLogin {
+        # Send users to the social-auth login view instead of the raw Django admin login
+        redir /login?next=/admin/ 302
+    }
+
     import proxy "license-manager:8000"
 }
