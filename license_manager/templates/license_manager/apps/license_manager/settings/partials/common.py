@@ -37,12 +37,15 @@ CSRF_COOKIE_SECURE = False
 #CSRF_TRUSTED_ORIGINS = []
 
 # Set these to the correct values for your OAuth2 provider (e.g., LMS)
-SOCIAL_AUTH_EDX_OAUTH2_KEY = 'license-manager-sso-key'
-SOCIAL_AUTH_EDX_OAUTH2_SECRET = 'license-manager-sso-secret'
-SOCIAL_AUTH_EDX_OAUTH2_URL_ROOT = 'http://127.0.0.1:8000'
-SOCIAL_AUTH_EDX_OAUTH2_LOGOUT_URL = 'http://127.0.0.1:8000/logout'
-BACKEND_SERVICE_EDX_OAUTH2_KEY = 'license-manager-backend-service-key'
-BACKEND_SERVICE_EDX_OAUTH2_SECRET = 'license-manager-service-secret'
+SOCIAL_AUTH_EDX_OAUTH2_KEY = "license-manager-key-sso"
+SOCIAL_AUTH_EDX_OAUTH2_SECRET = "license-manager-sso-secret"
+SOCIAL_AUTH_REDIRECT_IS_HTTPS = {% if ENABLE_HTTPS %}True{% else %}False{% endif %}
+SOCIAL_AUTH_EDX_OAUTH2_ISSUER = "{% if ENABLE_HTTPS %}https{% else %}http{% endif %}://{{ LMS_HOST }}"
+SOCIAL_AUTH_EDX_OAUTH2_URL_ROOT = "http://lms:8000"
+SOCIAL_AUTH_EDX_OAUTH2_LOGOUT_URL = SOCIAL_AUTH_EDX_OAUTH2_ISSUER + "/logout"
+BACKEND_SERVICE_EDX_OAUTH2_KEY = "license-manager-backend-service-key"
+BACKEND_SERVICE_EDX_OAUTH2_SECRET = "{{ LICENSE_MANAGER_OAUTH2_SECRET }}"
+BACKEND_SERVICE_EDX_OAUTH2_PROVIDER_URL = "http://lms:8000/oauth2"
 
 
 {% set jwt_rsa_key | rsa_import_key %}{{ JWT_RSA_PRIVATE_KEY }}{% endset %}
@@ -69,33 +72,9 @@ JWT_AUTH["JWT_ISSUERS"] = [
     }
 ]
 
-SOCIAL_AUTH_REDIRECT_IS_HTTPS = {% if ENABLE_HTTPS %}True{% else %}False{% endif %}
-SOCIAL_AUTH_EDX_OAUTH2_ISSUER = "{% if ENABLE_HTTPS %}https{% else %}http{% endif %}://{{ LMS_HOST }}"
-SOCIAL_AUTH_EDX_OAUTH2_URL_ROOT = "http://lms:8000"
-
-SOCIAL_AUTH_EDX_OAUTH2_KEY = "license-manager-key-sso"
-SOCIAL_AUTH_EDX_OAUTH2_SECRET = "license-manager-sso-secret"
-SOCIAL_AUTH_EDX_OAUTH2_LOGOUT_URL = SOCIAL_AUTH_EDX_OAUTH2_ISSUER + "/logout"
-BACKEND_SERVICE_EDX_OAUTH2_KEY = "license-manager-backend-service-key"
-BACKEND_SERVICE_EDX_OAUTH2_SECRET = "{{ LICENSE_MANAGER_OAUTH2_SECRET }}"
-BACKEND_SERVICE_EDX_OAUTH2_PROVIDER_URL = "http://lms:8000/oauth2"
 
 EDX_DRF_EXTENSIONS = {
     'OAUTH2_USER_INFO_URL': '{% if ENABLE_HTTPS %}https{% else %}http{% endif %}://{{ LMS_HOST }}/oauth2/user_info',
-}
-
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.mysql",
-        "NAME": "{{ LICENSE_MANAGER_MYSQL_DATABASE }}",
-        "USER": "{{ LICENSE_MANAGER_MYSQL_USERNAME }}",
-        "PASSWORD": "{{ LICENSE_MANAGER_MYSQL_PASSWORD }}",
-        "HOST": "{{ MYSQL_HOST }}",
-        "PORT": "{{ MYSQL_PORT }}",
-        "OPTIONS": {
-            "init_command": "SET sql_mode='STRICT_TRANS_TABLES'",
-        },
-    }
 }
 
 # reconfigure logging and Get rid of local logger
