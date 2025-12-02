@@ -38,12 +38,12 @@ CSRF_COOKIE_SECURE = False
 
 # Set these to the correct values for your OAuth2 provider (e.g., LMS)
 SOCIAL_AUTH_EDX_OAUTH2_KEY = "license-manager-key-sso"
-SOCIAL_AUTH_EDX_OAUTH2_SECRET = "license-manager-sso-secret"
+SOCIAL_AUTH_EDX_OAUTH2_SECRET = "{{ LICENSE_MANAGER_OAUTH2_SECRET_SSO }}"
 SOCIAL_AUTH_REDIRECT_IS_HTTPS = {% if ENABLE_HTTPS %}True{% else %}False{% endif %}
 SOCIAL_AUTH_EDX_OAUTH2_ISSUER = "{% if ENABLE_HTTPS %}https{% else %}http{% endif %}://{{ LMS_HOST }}"
 SOCIAL_AUTH_EDX_OAUTH2_URL_ROOT = "http://lms:8000"
 SOCIAL_AUTH_EDX_OAUTH2_LOGOUT_URL = SOCIAL_AUTH_EDX_OAUTH2_ISSUER + "/logout"
-BACKEND_SERVICE_EDX_OAUTH2_KEY = "license-manager-backend-service-key"
+BACKEND_SERVICE_EDX_OAUTH2_KEY = "license-manager-key"
 BACKEND_SERVICE_EDX_OAUTH2_SECRET = "{{ LICENSE_MANAGER_OAUTH2_SECRET }}"
 BACKEND_SERVICE_EDX_OAUTH2_PROVIDER_URL = "http://lms:8000/oauth2"
 
