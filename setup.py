@@ -41,7 +41,7 @@ setup(
     long_description=load_readme(),
     packages=find_packages(exclude=["tests*"]),
     include_package_data=True,
-    python_requires=">=3.11",
+    python_requires=">=3.10",
     install_requires=["tutor>=16.0.0"],
     entry_points={
         "tutor.plugin.v1": [
@@ -54,6 +54,7 @@ setup(
         "License :: OSI Approved :: GNU Affero General Public License v3",
         "Operating System :: OS Independent",
         "Programming Language :: Python",
+        "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
         "Programming Language :: Python :: 3.12",
     ],
