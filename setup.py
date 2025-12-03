@@ -30,7 +30,8 @@ setup(
     url="https://github.com/True-Course-Simulations/tutor-contrib-license-manager",
     project_urls={
         "Code": "https://github.com/True-Course-Simulations/tutor-contrib-license-manager",
-        "Issue tracker": "https://github.com/lpm0073/tutor-contrib-license-manager/issues",
+        "Issue tracker": "https://github.com/True-Course-Simulations/tutor-contrib-license-manager/issues",
+        "Upstream (original plugin)": "https://github.com/lpm0073/tutor-contrib-license-manager",
     },
     license="AGPLv3",
     author="Lawrence McDaniel",
