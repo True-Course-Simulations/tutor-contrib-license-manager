@@ -69,6 +69,11 @@ RUN apt update && apt install -y software-properties-common libmysqlclient-dev l
 COPY --from=code /openedx/license_manager /openedx/license_manager
 WORKDIR /openedx/license_manager
 
+# Copy custom management commands from plugin build context
+# into the subscriptions app inside license_manager.
+COPY ./apps/subscriptions/management/commands/*.py \
+    /openedx/license_manager/license_manager/apps/subscriptions/management/commands/
+
 # Historically this image used uWSGI, but building uwsgi==2.0.20 is unreliable
 # against modern Python. We now use Gunicorn instead, so the old install is
 # intentionally disabled.
@@ -110,6 +115,7 @@ COPY --chown=app:app --from=code /openedx/license_manager /openedx/license_manag
 COPY --chown=app:app --from=python /opt/pyenv /opt/pyenv
 COPY --chown=app:app --from=python-requirements /openedx/venv /openedx/venv
 COPY --chown=app:app --from=python-requirements /openedx/requirements /openedx/requirements
+COPY --chown=app:app ./apps/subscriptions/management/commands/*.py /openedx/license_manager/license_manager/apps/subscriptions/management/commands/
 
 ENV PATH /openedx/venv/bin:${PATH}
 ENV VIRTUAL_ENV /openedx/venv/
