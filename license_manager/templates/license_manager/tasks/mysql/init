@@ -1,22 +1,20 @@
 #!/bin/bash
 #---------------------------------------------------------
 # written by: Lawrence McDaniel
-#             https://lawrencemcdaniel.com
-#
-# date:       aug-2022
-#
+# updated by: Cannon Smith (Nov-2025)
 # usage:      create mysql database and user account
 #--------------------------------------------------------
+set -euo pipefail
 
 echo "Initialising MySQL..."
 mysql_connection_max_attempts=10
 mysql_connection_attempt=0
-until mysql -u {{ MYSQL_ROOT_USERNAME }} --password="{{ MYSQL_ROOT_PASSWORD }}" --host "{{ MYSQL_HOST }}" --port {{ MYSQL_PORT }} -e 'exit'
+
+while ! mysql -uroot -p"{{ MYSQL_ROOT_PASSWORD }}" -h "{{ MYSQL_HOST }}" -P {{ MYSQL_PORT }} -e 'SELECT 1;' >/dev/null 2>&1
 do
-    mysql_connection_attempt=$(expr $mysql_connection_attempt + 1)
+    mysql_connection_attempt=$((mysql_connection_attempt + 1))
     echo "    [$mysql_connection_attempt/$mysql_connection_max_attempts] Waiting for MySQL service (this may take a while)..."
-    if [ $mysql_connection_attempt -eq $mysql_connection_max_attempts ]
-    then
+    if [ $mysql_connection_attempt -eq $mysql_connection_max_attempts ]; then
       echo "MySQL initialisation error" 1>&2
       exit 1
     fi
@@ -24,15 +22,19 @@ do
 done
 echo "MySQL is up and running"
 
+echo "Creating license_manager database..."
+mysql -uroot -p"{{ MYSQL_ROOT_PASSWORD }}" -h "{{ MYSQL_HOST }}" -P {{ MYSQL_PORT }} \
+  -e "CREATE DATABASE IF NOT EXISTS \`{{ LICENSE_MANAGER_MYSQL_DATABASE }}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
 
+echo "Creating license_manager user..."
+mysql -uroot -p"{{ MYSQL_ROOT_PASSWORD }}" -h "{{ MYSQL_HOST }}" -P {{ MYSQL_PORT }} \
+  -e "CREATE USER IF NOT EXISTS '{{ LICENSE_MANAGER_MYSQL_USERNAME }}'@'%' IDENTIFIED BY '{{ LICENSE_MANAGER_MYSQL_PASSWORD }}';"
 
-# create the license manager database
-echo "create license_manager database"
-mysql -u {{ MYSQL_ROOT_USERNAME }} --password="{{ MYSQL_ROOT_PASSWORD }}" --host "{{ MYSQL_HOST }}" --port {{ MYSQL_PORT }} -e "CREATE DATABASE IF NOT EXISTS {{ LICENSE_MANAGER_MYSQL_DATABASE }};"
+echo "Updating license_manager user password and grants..."
+mysql -uroot -p"{{ MYSQL_ROOT_PASSWORD }}" -h "{{ MYSQL_HOST }}" -P {{ MYSQL_PORT }} \
+  -e "ALTER USER '{{ LICENSE_MANAGER_MYSQL_USERNAME }}'@'%' IDENTIFIED BY '{{ LICENSE_MANAGER_MYSQL_PASSWORD }}';"
 
-# create a mysql user w permissions
-echo "create license_manager user"
-mysql -u {{ MYSQL_ROOT_USERNAME }} --password="{{ MYSQL_ROOT_PASSWORD }}" --host "{{ MYSQL_HOST }}" --port {{ MYSQL_PORT }} -e "CREATE USER IF NOT EXISTS '{{ LICENSE_MANAGER_MYSQL_USERNAME }}';"
-mysql -u {{ MYSQL_ROOT_USERNAME }} --password="{{ MYSQL_ROOT_PASSWORD }}" --host "{{ MYSQL_HOST }}" --port {{ MYSQL_PORT }} -e "ALTER USER '{{ LICENSE_MANAGER_MYSQL_USERNAME }}'@'%' IDENTIFIED BY '{{ LICENSE_MANAGER_MYSQL_PASSWORD }}';"
-mysql -u {{ MYSQL_ROOT_USERNAME }} --password="{{ MYSQL_ROOT_PASSWORD }}" --host "{{ MYSQL_HOST }}" --port {{ MYSQL_PORT }} -e "GRANT ALL ON {{ LICENSE_MANAGER_MYSQL_DATABASE }}.* TO '{{ LICENSE_MANAGER_MYSQL_USERNAME }}'@'%';"
+mysql -uroot -p"{{ MYSQL_ROOT_PASSWORD }}" -h "{{ MYSQL_HOST }}" -P {{ MYSQL_PORT }} \
+  -e "GRANT ALL ON \`{{ LICENSE_MANAGER_MYSQL_DATABASE }}\`.* TO '{{ LICENSE_MANAGER_MYSQL_USERNAME }}'@'%'; FLUSH PRIVILEGES;"
 
+echo "MySQL initialization for license_manager completed."

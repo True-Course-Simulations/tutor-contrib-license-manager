@@ -2,6 +2,8 @@
 # written by:   Lawrence McDaniel
 #
 # date:         aug-2022
+# updated by:   Cannon Smith
+# updated date: nov-2025
 #
 # usage:        build the docker image. this is mostly based on the Dockerfile used
 #               to create the openedx container.
@@ -10,7 +12,7 @@
 #------------------------------------------------------------------------------
 
 ###### Minimal image with base system requirements for most stages
-FROM docker.io/ubuntu:20.04 as minimal
+FROM docker.io/ubuntu:20.04 AS minimal
 LABEL maintainer="Lawrence McDaniel <lpm0073@gmail.com>"
 
 ENV DEBIAN_FRONTEND=noninteractive
@@ -21,20 +23,22 @@ ENV LC_ALL en_US.UTF-8
 {{ patch("license-manager-dockerfile-minimal") }}
 
 ###### Install python with pyenv in /opt/pyenv and create virtualenv in /openedx/venv
-FROM minimal as python
+FROM minimal AS python
 # https://github.com/pyenv/pyenv/wiki/Common-build-problems#prerequisites
 RUN apt update && \
     apt install -y libssl-dev zlib1g-dev libbz2-dev \
     libreadline-dev libsqlite3-dev wget curl llvm libncurses5-dev libncursesw5-dev \
     xz-utils tk-dev libffi-dev liblzma-dev python-openssl git
-ARG PYTHON_VERSION=3.8.12
+
+# Updated Python version to support Sumac-era dependencies
+ARG PYTHON_VERSION=3.11.9
 ENV PYENV_ROOT /opt/pyenv
-RUN git clone https://github.com/pyenv/pyenv $PYENV_ROOT --branch v2.2.2 --depth 1
+RUN git clone https://github.com/pyenv/pyenv $PYENV_ROOT
 RUN $PYENV_ROOT/bin/pyenv install $PYTHON_VERSION
 RUN $PYENV_ROOT/versions/$PYTHON_VERSION/bin/python -m venv /openedx/venv
 
 ###### Install Dockerize to wait for mysql DB availability
-FROM minimal as dockerize
+FROM minimal AS dockerize
 # https://github.com/powerman/dockerize/releases
 ARG DOCKERIZE_VERSION=v0.16.0
 RUN dockerize_url="https://github.com/powerman/dockerize/releases/download/$DOCKERIZE_VERSION/dockerize-linux-$(uname -m | sed 's@aarch@arm@')" \
@@ -42,19 +46,18 @@ RUN dockerize_url="https://github.com/powerman/dockerize/releases/download/$DOCK
     && curl --fail --location --output /usr/local/bin/dockerize $dockerize_url \
     && chmod a+x /usr/local/bin/dockerize
 
-
 # Now install license-manager
 # mcdaniel aug-2022: basing this section on the Tutor ecommerce plugin
 # see: https://github.com/overhangio/tutor-ecommerce/blob/master/tutorecommerce/templates/ecommerce/build/ecommerce/Dockerfile
-FROM minimal as code
-ARG LICENSE_MANAGER_REPOSITORY=https://github.com/edx/license-manager.git
+FROM minimal AS code
+ARG LICENSE_MANAGER_REPOSITORY=https://github.com/openedx/license-manager.git
 ARG LICENSE_MANAGER_VERSION={{ OPENEDX_COMMON_VERSION }}
 RUN mkdir -p /openedx/license_manager && \
     git clone $LICENSE_MANAGER_REPOSITORY --branch $LICENSE_MANAGER_VERSION --depth 1 /openedx/license_manager
 WORKDIR /openedx/license_manager
 
 ###### Install python requirements in virtualenv
-FROM python as python-requirements
+FROM python AS python-requirements
 ENV PATH /openedx/venv/bin:${PATH}
 ENV VIRTUAL_ENV /openedx/venv/
 
@@ -66,9 +69,15 @@ RUN apt update && apt install -y software-properties-common libmysqlclient-dev l
 COPY --from=code /openedx/license_manager /openedx/license_manager
 WORKDIR /openedx/license_manager
 
-# Install uwsgi
-# https://pypi.org/project/uWSGI/
-RUN pip install uwsgi==2.0.20
+# Copy custom management commands from plugin build context
+# into the subscriptions app inside license_manager.
+COPY ./apps/subscriptions/management/commands/*.py \
+    /openedx/license_manager/license_manager/apps/subscriptions/management/commands/
+
+# Historically this image used uWSGI, but building uwsgi==2.0.20 is unreliable
+# against modern Python. We now use Gunicorn instead, so the old install is
+# intentionally disabled.
+# RUN pip install uwsgi==2.0.20
 
 {{ patch("license-manager-dockerfile-post-python-requirements") }}
 
@@ -77,13 +86,17 @@ RUN ls -lha
 RUN pip install -r requirements/pip.txt
 RUN pip install -r requirements/production.txt
 
+# Cannon Smith – updated 2025-11-21:
+# Use gunicorn instead of uwsgi and add WhiteNoise to serve static files from /openedx/staticfiles.
+RUN pip install "gunicorn==21.2.0" "whitenoise==6.7.0"
+
 COPY ./requirements/ /openedx/requirements
 RUN cd /openedx/requirements/ \
   && touch ./private.txt \
   && pip install -r ./private.txt
 
 ###### Production image with system and python requirements
-FROM minimal as production
+FROM minimal AS production
 
 # Install system requirements.
 # Mcdaniel: many of these probably are not necessary. i copied the list from the openedx build. there's almost certainly some
@@ -102,6 +115,7 @@ COPY --chown=app:app --from=code /openedx/license_manager /openedx/license_manag
 COPY --chown=app:app --from=python /opt/pyenv /opt/pyenv
 COPY --chown=app:app --from=python-requirements /openedx/venv /openedx/venv
 COPY --chown=app:app --from=python-requirements /openedx/requirements /openedx/requirements
+COPY --chown=app:app ./apps/subscriptions/management/commands/*.py /openedx/license_manager/license_manager/apps/subscriptions/management/commands/
 
 ENV PATH /openedx/venv/bin:${PATH}
 ENV VIRTUAL_ENV /openedx/venv/
@@ -116,11 +130,22 @@ ENV LICENSE_MANAGER_CFG /openedx/config.yml
 
 {{ patch("license-manager-dockerfile-pre-assets") }}
 
+# --------------------------------------------------------------------------
 # Collect static assets (aka: "make static")
-COPY --chown=app:app assets.py ./license_manager/settings/assets.py
-ENV DJANGO_SETTINGS_MODULE license_manager.settings.assets
-RUN python3 manage.py collectstatic --noinput
-
+# Updated by: Cannon Smith
+# Updated on: 2025-11-21
+#
+# IMPORTANT:
+# - During image build, only the repository settings exist.
+# - Tutor-generated settings (license_manager.settings.tutor.*) are NOT
+#   available yet, so we cannot import them here.
+#
+# Therefore we run collectstatic using license_manager.settings.production,
+# which lives in the cloned repo. At runtime, Tutor will override
+# DJANGO_SETTINGS_MODULE as needed.
+# --------------------------------------------------------------------------
+RUN DJANGO_SETTINGS_MODULE=license_manager.settings.production \
+    python3 manage.py collectstatic --noinput
 
 ENV DJANGO_SETTINGS_MODULE license_manager.settings.tutor.production
 
@@ -129,18 +154,12 @@ ENV DJANGO_SETTINGS_MODULE license_manager.settings.tutor.production
 EXPOSE 8000
 
 ###### Final image with production cmd
-FROM production as final
+FROM production AS final
 
-# Run server
-CMD uwsgi \
-    --static-map /static=/openedx/staticfiles/ \
-    --static-map /media=/openedx/media/ \
-    --http 0.0.0.0:8000 \
-    --thunder-lock \
-    --single-interpreter \
-    --enable-threads \
-    --processes=${UWSGI_WORKERS:-2} \
-    --buffer-size=8192 \
-    --wsgi-file $SERVICE_VARIANT/wsgi.py
+# Run server with Gunicorn instead of uWSGI
+CMD gunicorn \
+    --bind 0.0.0.0:8000 \
+    --workers=${GUNICORN_WORKERS:-2} \
+    license_manager.wsgi:application
 
 {{ patch("license-manager-dockerfile-final") }}
