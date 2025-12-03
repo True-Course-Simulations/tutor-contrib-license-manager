@@ -27,34 +27,34 @@ ABOUT = load_about()
 setup(
     name="tutor-contrib-license-manager",
     version=ABOUT["__version__"],
-    url="https://github.com/lpm0073/tutor-contrib-license-manager",
+    url="https://github.com/True-Course-Simulations/tutor-contrib-license-manager",
     project_urls={
-        "Code": "https://github.com/lpm0073/tutor-contrib-license-manager",
+        "Code": "https://github.com/True-Course-Simulations/tutor-contrib-license-manager",
         "Issue tracker": "https://github.com/lpm0073/tutor-contrib-license-manager/issues",
     },
     license="AGPLv3",
     author="Lawrence McDaniel",
     author_email="lpm0073@gmail.com",
-    description="A Tutor plugin for Open edX License Manager",
+    maintainer="Cannon Smith",
+    maintainer_email="cannon@tcsims.com",
+    description="A Tutor plugin for Open edX License Manager (Sumac / Tutor v16+ compatible)",
     long_description=load_readme(),
     packages=find_packages(exclude=["tests*"]),
     include_package_data=True,
-    python_requires=">=3.7",
-    install_requires=["tutor"],
+    python_requires=">=3.10",
+    install_requires=["tutor>=16.0.0"],
     entry_points={
         "tutor.plugin.v1": [
             "license_manager = license_manager.plugin"
         ]
     },
     classifiers=[
-        "Development Status :: 3 - Alpha",
+        "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",
         "License :: OSI Approved :: GNU Affero General Public License v3",
         "Operating System :: OS Independent",
         "Programming Language :: Python",
-        "Programming Language :: Python :: 3.7",
-        "Programming Language :: Python :: 3.8",
-        "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
     ],
 )
