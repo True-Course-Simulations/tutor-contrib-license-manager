@@ -3,6 +3,11 @@ license-manager-job:
     image: {{ LICENSE_MANAGER_IMAGE }}
     environment:
       DJANGO_SETTINGS_MODULE: license_manager.settings.tutor.production
+      CELERY_BROKER_TRANSPORT: redis
+      CELERY_BROKER_HOSTNAME: "{{ REDIS_HOST }}:{{ REDIS_PORT }}"
+      CELERY_BROKER_VHOST: "0"
+      CELERY_BROKER_USER: ""
+      CELERY_BROKER_PASSWORD: "{{ REDIS_PASSWORD }}"
     volumes:
       - ../plugins/license_manager/apps/license_manager/settings:/openedx/license_manager/license_manager/settings/tutor:ro
-    depends_on: {{ [("mysql", RUN_MYSQL)]|list_if }}
+    depends_on: {{ [("mysql", RUN_MYSQL), ("redis", True)]|list_if }}
