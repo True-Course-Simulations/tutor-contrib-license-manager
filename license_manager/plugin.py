@@ -6,6 +6,9 @@ from tutor import hooks
 
 from .__about__ import __version__
 
+PACKAGE_NAME = "license_manager"
+SERVICE_NAME = "license-manager"
+
 
 ########################################
 # CONFIGURATION
@@ -83,7 +86,7 @@ def _add_init_task(service: str, *relpath: str) -> None:
     as an init task for the given service.
     """
     task_path = os.path.join(
-        pkg_resources.resource_filename("license_manager", "templates"),
+        pkg_resources.resource_filename(PACKAGE_NAME, "templates"),
         *relpath,
     )
     with open(task_path, encoding="utf-8") as task_file:
@@ -94,19 +97,19 @@ def _add_init_task(service: str, *relpath: str) -> None:
 #   templates/license_manager/tasks/mysql/init
 #   templates/license_manager/tasks/lms/init
 #   templates/license_manager/tasks/license_manager/init
-_add_init_task("mysql", "license_manager", "tasks", "mysql", "init")
-_add_init_task("lms", "license_manager", "tasks", "lms", "init")
-_add_init_task("license-manager", "license_manager", "tasks", "license_manager", "init")
+_add_init_task("mysql", PACKAGE_NAME, "tasks", "mysql", "init")
+_add_init_task("lms", PACKAGE_NAME, "tasks", "lms", "init")
+_add_init_task(SERVICE_NAME, PACKAGE_NAME, "tasks", "license_manager", "init")
 
 ########################################
 # DOCKER IMAGE MANAGEMENT
 ########################################
 
-# To build an image with `tutor images build license_manager`, add a Dockerfile to templates/license_manager/build/license_manager and write:
+# To build an image with `tutor images build license-manager`, add a Dockerfile to templates/license_manager/build/license_manager and write:
 @hooks.Filters.IMAGES_BUILD.add()
 def add_license_manager_build(images, settings):
     """
-    Only build the license_manager image when no external image is configured.
+    Only build the license-manager image when no external image is configured.
 
     - If LICENSE_MANAGER_DOCKER_IMAGE is empty: build LICENSE_MANAGER_BUILT_IMAGE.
     - If LICENSE_MANAGER_DOCKER_IMAGE is set: assume the operator owns that image;
@@ -119,35 +122,35 @@ def add_license_manager_build(images, settings):
 
     images.append(
         (
-            "license_manager",  # service name, same as before
-            ("plugins", "license_manager", "build", "license_manager"),  # Dockerfile context
-            settings["LICENSE_MANAGER_BUILT_IMAGE"],  # tag we build
+            SERVICE_NAME,
+            ("plugins", PACKAGE_NAME, "build", "license_manager"),
+            settings["LICENSE_MANAGER_BUILT_IMAGE"],
             (),
         )
     )
     return images
 
 
-# To pull/push an image with `tutor images pull license_manager` and `tutor images push license_manager`, write:
+# To pull/push an image with `tutor images pull license-manager` and `tutor images push license-manager`, write:
 @hooks.Filters.IMAGES_PULL.add()
 def add_license_manager_pull(images, settings):
     """
     When an external license manager image is configured, allow
-    `tutor images pull license_manager` to pull it.
+    `tutor images pull license-manager` to pull it.
     """
     external_image = settings.get("LICENSE_MANAGER_DOCKER_IMAGE")
     if external_image:
         images.append(
             (
-                "license_manager",
+                SERVICE_NAME,
                 external_image,
             )
         )
     return images
 
 # hooks.Filters.IMAGES_PUSH.add_item((
-#     "license_manager",
-#     "docker.io/license_manager:{{ LICENSE_MANAGER_VERSION }}",
+#     SERVICE_NAME,
+#     "docker.io/license-manager:{{ LICENSE_MANAGER_VERSION }}",
 # )
 
 
@@ -160,7 +163,7 @@ def add_license_manager_pull(images, settings):
 hooks.Filters.ENV_TEMPLATE_ROOTS.add_items(
     # Root paths for template files, relative to the project root.
     [
-        pkg_resources.resource_filename("license_manager", "templates"),
+        pkg_resources.resource_filename(PACKAGE_NAME, "templates"),
     ]
 )
 
@@ -185,7 +188,7 @@ hooks.Filters.ENV_TEMPLATE_TARGETS.add_items(
 # apply a patch based on the file's name and contents.
 for path in glob(
     os.path.join(
-        pkg_resources.resource_filename("license_manager", "patches"),
+        pkg_resources.resource_filename(PACKAGE_NAME, "patches"),
         "*",
     )
 ):

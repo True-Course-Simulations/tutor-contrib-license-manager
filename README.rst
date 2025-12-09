@@ -71,17 +71,19 @@ Linux & macOS command line
     # install this repo to your Python virtual environment
     pip install git+https://github.com/lpm0073/tutor-contrib-license-manager
 
-    # enable the plugin
+    # enable the plugin (plugin identifier uses an underscore)
     tutor plugins enable license_manager
 
-    # build a Docker container
-    tutor images build license_manager
+    # build a Docker container (service/image identifier uses a hyphen)
+    tutor images build license-manager
 
     # configure this plugin
     tutor config save --set LICENSE_MANAGER_DOCKER_IMAGE="https://*******.dkr.ecr.us-east-2.amazonaws.com/license_manager:latest"  \
                       --set LICENSE_MANAGER_MYSQL_DATABASE="schoolofrock-lm"  \
                       --set LICENSE_MANAGER_MYSQL_PASSWOR="str0ng-@s-@n-0x"  \
                       --set LICENSE_MANAGER_MYSQL_USERNAME="lm-admin"
+
+The Tutor CLI uses ``license_manager`` when referring to the plugin itself (for example, enabling/disabling it) and ``license-manager`` when referring to the running service, Docker image, or init tasks.
 
 
 Kubernetes

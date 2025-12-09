@@ -26,6 +26,7 @@ LMS_HOST="web.stepwise.ai"
 HOST="subscriptions.${LMS_HOST}"
 
 PLUGIN_NAME="license_manager"
+SERVICE_NAME="license-manager"
 PLUGIN_REPO="https://github.com/lpm0073/tutor-contrib-license-manager"
 
 # Plugin installation
@@ -68,7 +69,7 @@ tutor config save --set "LICENSE_MANAGER_LMS_HOST=${LMS_HOST}" \
 # Docker build / AWS ECR upload
 # ----------------------------------------------
 TUTOR_VERSION=$(tutor --version | cut -f3 -d' ')
-AWS_ECR_REPOSITORY=${PLUGIN_NAME}
+AWS_ECR_REPOSITORY=${SERVICE_NAME}
 REPOSITORY_TAG="${TUTOR_VERSION}-$(date +%Y%m%d%H%M)"
 AWS_ECR_REPOSITORY_URL="${AWS_ECR_REGISTRY}/${AWS_ECR_REPOSITORY}"
 
@@ -77,8 +78,8 @@ DOCKER_IMAGE_LATEST="${AWS_ECR_REPOSITORY_URL}:latest"
 
 tutor config save --set "LICENSE_MANAGER_DOCKER_IMAGE=${DOCKER_IMAGE}"
 
-tutor images build ${PLUGIN_NAME}
-tutor images push ${PLUGIN_NAME}        # FIX NOTE: Error: Image 'license_manager' could not be found
+tutor images build ${SERVICE_NAME}
+tutor images push ${SERVICE_NAME}
 
 docker tag ${DOCKER_IMAGE} ${DOCKER_IMAGE_LATEST}
 docker push ${DOCKER_IMAGE_LATEST}

@@ -12,10 +12,52 @@
 
 dockerize -wait tcp://{{ MYSQL_HOST }}:{{ MYSQL_PORT }} -timeout 20s
 
+# Enterprise service worker configuration
+ENTERPRISE_WORKER_USERNAME="{{ ENTERPRISE_SERVICE_WORKER_USERNAME | default('enterprise_worker', true) }}"
+ENTERPRISE_WORKER_EMAIL="${ENTERPRISE_WORKER_USERNAME}@openedx"
+
+# Ensure the enterprise service worker account exists with a predictable email
+echo "license-manager lms init: syncing enterprise worker user email"
+./manage.py lms shell <<PY
+from django.contrib.auth import get_user_model
+User = get_user_model()
+user = User.objects.filter(username='${ENTERPRISE_WORKER_USERNAME}').first()
+target_email='${ENTERPRISE_WORKER_EMAIL}'
+if user and user.email != target_email:
+    user.email = target_email
+    user.save()
+PY
+
+echo "license-manager lms init: ensuring enterprise service worker user exists"
+./manage.py lms manage_user ${ENTERPRISE_WORKER_USERNAME} ${ENTERPRISE_WORKER_EMAIL} --staff --superuser --unusable-password
+
+echo "license-manager lms init: configuring ENTERPRISE_SERVICE_WORKER_USERNAME"
+./manage.py lms shell <<PY
+from django.contrib.sites.models import Site
+try:
+    from openedx.core.djangoapps.site_configuration.models import SiteConfiguration
+except ImportError:
+    SiteConfiguration = None
+
+if SiteConfiguration:
+    site = Site.objects.get_current()
+    site_config, _ = SiteConfiguration.objects.get_or_create(site=site)
+    values = dict(site_config.site_values or {})
+    override = '${ENTERPRISE_WORKER_USERNAME}'
+    if values.get('ENTERPRISE_SERVICE_WORKER_USERNAME') != override:
+        values['ENTERPRISE_SERVICE_WORKER_USERNAME'] = override
+        site_config.site_values = values
+        site_config.save()
+else:
+    print('SiteConfiguration unavailable; skipping ENTERPRISE_SERVICE_WORKER_USERNAME override')
+PY
+
 # Modify users created with an incorrect email and that might clash with the newly created users
-./manage.py lms shell -c \
-  "from django.contrib.auth import get_user_model;\
-  get_user_model().objects.filter(username='license_manager').exclude(email='license_manager@openedx').update(email='license_manager@openedx')"
+./manage.py lms shell <<'PY'
+from django.contrib.auth import get_user_model
+User = get_user_model()
+User.objects.filter(username='license_manager').exclude(email='license_manager@openedx').update(email='license_manager@openedx')
+PY
 
 ./manage.py lms manage_user license_manager license_manager@openedx --staff --superuser --unusable-password
 
@@ -66,4 +108,3 @@ dockerize -wait tcp://{{ MYSQL_HOST }}:{{ MYSQL_PORT }} -timeout 20s
 # FIX NOTE: review this command to see what needs to be duplicated.
 # Create commerce configuration
 #./manage.py lms configure_commerce
-
