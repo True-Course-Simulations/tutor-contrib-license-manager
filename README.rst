@@ -35,7 +35,7 @@ Open edX License Manager plugin for Tutor
 
 |
 
-Original plugin by Lawrence McDaniel. Updated and maintained by Cannon Smith for Tutor v16+ compatibility.
+Original plugin by Lawrence McDaniel. Updated and maintained by Cannon Smith for Tutor v19+ compatibility.
 
 This is a plugin for `Tutor <https://docs.tutor.overhang.io>`__ that integrates the `License Manager <https://github.com/openedx/license-manager>`__ service in an Open edX platform.
 License Manager provides supplmental e-commerce service such as monthly subscription payment options. For further instructions on how to setup License Manager with Open edX, check the `official License Manager documentation <https://github.com/openedx/license-manager/tree/master/docs/>`__.

@@ -38,12 +38,12 @@ setup(
     author_email="lpm0073@gmail.com",
     maintainer="Cannon Smith",
     maintainer_email="cannon@tcsims.com",
-    description="A Tutor plugin for Open edX License Manager (Sumac / Tutor v16+ compatible)",
+    description="A Tutor plugin for Open edX License Manager (Sumac / Tutor v19+ compatible)",
     long_description=load_readme(),
     packages=find_packages(exclude=["tests*"]),
     include_package_data=True,
     python_requires=">=3.10",
-    install_requires=["tutor>=16.0.0"],
+    install_requires=["tutor>=19.0.0"],
     entry_points={
         "tutor.plugin.v1": [
             "license_manager = license_manager.plugin"
