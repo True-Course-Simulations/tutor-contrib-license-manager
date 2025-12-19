@@ -40,7 +40,6 @@ CSRF_TRUSTED_ORIGINS = [
 ]
 
 SOCIAL_AUTH_EDX_OAUTH2_PUBLIC_URL_ROOT = "{% if ENABLE_HTTPS %}https{% else %}http{% endif %}://{{ LMS_HOST }}"
-
 BACKEND_SERVICE_EDX_OAUTH2_KEY = "{{ LICENSE_MANAGER_OAUTH2_KEY }}"
 
 {{ patch("license-manager-settings-production") }}

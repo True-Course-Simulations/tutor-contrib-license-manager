@@ -24,6 +24,9 @@ LANGUAGE_CODE = 'en-us'
 
 TIME_ZONE = 'UTC'
 
+LMS_URL = "{% if ENABLE_HTTPS %}https{% else %}http{% endif %}://{{ LMS_HOST }}"
+ENTERPRISE_CATALOG_URL = "{% if ENABLE_HTTPS %}https{% else %}http{% endif %}://{{ ENTERPRISECATALOG_HOST }}"
+
 # COOKIE CONFIGURATION
 # The purpose of customizing the cookie names is to avoid conflicts when
 # multiple Django services are running behind the same hostname.
