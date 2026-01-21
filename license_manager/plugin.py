@@ -21,7 +21,8 @@ hooks.Filters.CONFIG_DEFAULTS.add_items(
         ("DOCKER_IMAGE_PREFIX", ""),
 
         # Where to clone license-manager from when we build it ourselves
-        ("LICENSE_MANAGER_REPOSITORY", "https://github.com/edx/license-manager.git"),
+        #("LICENSE_MANAGER_REPOSITORY", "https://github.com/edx/license-manager.git"),
+        ("LICENSE_MANAGER_REPOSITORY", "https://github.com/openedx/license-manager.git"),
 
         # Tag we use when the plugin builds the image
         # NOTE: Docker tags cannot contain '/', so we sanitize the version.
