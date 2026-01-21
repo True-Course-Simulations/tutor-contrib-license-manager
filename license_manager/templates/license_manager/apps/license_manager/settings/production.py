@@ -22,7 +22,12 @@ MIDDLEWARE = tuple(MIDDLEWARE)
 
 # For now, avoid manifest-based storage to get rid of
 # "Missing staticfiles manifest entry" errors.
-STATICFILES_STORAGE = "whitenoise.storage.CompressedStaticFilesStorage"
+# Django 4.2+: use STORAGES instead of STATICFILES_STORAGE (they are mutually exclusive).
+# Keep existing STORAGES (including "default") and override only "staticfiles".
+STORAGES = dict(STORAGES)  # shallow copy in case it's defined upstream
+STORAGES["staticfiles"] = {
+    "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
+}
 
 # Let WhiteNoise fall back to Django finders (fine for dev)
 WHITENOISE_USE_FINDERS = True
