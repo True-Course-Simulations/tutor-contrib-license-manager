@@ -24,7 +24,7 @@ MIDDLEWARE = tuple(MIDDLEWARE)
 # "Missing staticfiles manifest entry" errors.
 # Django 4.2+: use STORAGES instead of STATICFILES_STORAGE (they are mutually exclusive).
 # Keep existing STORAGES (including "default") and override only "staticfiles".
-STORAGES = dict(STORAGES)  # shallow copy in case it's defined upstream
+STORAGES = dict(globals().get("STORAGES", {}))
 STORAGES["staticfiles"] = {
     "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
 }
