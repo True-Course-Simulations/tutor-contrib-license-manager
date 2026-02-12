@@ -10,31 +10,42 @@ echo "Initialising MySQL..."
 mysql_connection_max_attempts=10
 mysql_connection_attempt=0
 
-while ! mysql -uroot -p"{{ MYSQL_ROOT_PASSWORD }}" -h "{{ MYSQL_HOST }}" -P {{ MYSQL_PORT }} -e 'SELECT 1;' >/dev/null 2>&1
+MYSQL_OPTS=(
+  "-u" "{{ MYSQL_ROOT_USERNAME }}"
+  "--password={{ MYSQL_ROOT_PASSWORD }}"
+  "--host" "{{ MYSQL_HOST }}"
+  "--port" "{{ MYSQL_PORT }}"
+  # If Azure requires SSL, uncomment ONE of these:
+  # "--ssl-mode=REQUIRED"
+  # "--ssl-mode=VERIFY_CA" "--ssl-ca=/etc/ssl/certs/ca-certificates.crt"
+  "--connect-timeout=5"
+)
+
+until mysql "${MYSQL_OPTS[@]}" -e 'SELECT 1;'
 do
-    mysql_connection_attempt=$((mysql_connection_attempt + 1))
-    echo "    [$mysql_connection_attempt/$mysql_connection_max_attempts] Waiting for MySQL service (this may take a while)..."
-    if [ $mysql_connection_attempt -eq $mysql_connection_max_attempts ]; then
-      echo "MySQL initialisation error" 1>&2
-      exit 1
-    fi
-    sleep 10
+  mysql_connection_attempt=$((mysql_connection_attempt + 1))
+  echo "    [$mysql_connection_attempt/$mysql_connection_max_attempts] Waiting for MySQL service..."
+  if [ "$mysql_connection_attempt" -ge "$mysql_connection_max_attempts" ]; then
+    echo "MySQL initialisation error (gave up after $mysql_connection_max_attempts attempts)" 1>&2
+    exit 1
+  fi
+  sleep 10
 done
+
 echo "MySQL is up and running"
 
 echo "Creating license_manager database..."
-mysql -uroot -p"{{ MYSQL_ROOT_PASSWORD }}" -h "{{ MYSQL_HOST }}" -P {{ MYSQL_PORT }} \
+mysql "${MYSQL_OPTS[@]}" \
   -e "CREATE DATABASE IF NOT EXISTS \`{{ LICENSE_MANAGER_MYSQL_DATABASE }}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
 
-echo "Creating license_manager user..."
-mysql -uroot -p"{{ MYSQL_ROOT_PASSWORD }}" -h "{{ MYSQL_HOST }}" -P {{ MYSQL_PORT }} \
+echo "Creating/updating license_manager user + grants..."
+mysql "${MYSQL_OPTS[@]}" \
   -e "CREATE USER IF NOT EXISTS '{{ LICENSE_MANAGER_MYSQL_USERNAME }}'@'%' IDENTIFIED BY '{{ LICENSE_MANAGER_MYSQL_PASSWORD }}';"
 
-echo "Updating license_manager user password and grants..."
-mysql -uroot -p"{{ MYSQL_ROOT_PASSWORD }}" -h "{{ MYSQL_HOST }}" -P {{ MYSQL_PORT }} \
+mysql "${MYSQL_OPTS[@]}" \
   -e "ALTER USER '{{ LICENSE_MANAGER_MYSQL_USERNAME }}'@'%' IDENTIFIED BY '{{ LICENSE_MANAGER_MYSQL_PASSWORD }}';"
 
-mysql -uroot -p"{{ MYSQL_ROOT_PASSWORD }}" -h "{{ MYSQL_HOST }}" -P {{ MYSQL_PORT }} \
-  -e "GRANT ALL ON \`{{ LICENSE_MANAGER_MYSQL_DATABASE }}\`.* TO '{{ LICENSE_MANAGER_MYSQL_USERNAME }}'@'%'; FLUSH PRIVILEGES;"
+mysql "${MYSQL_OPTS[@]}" \
+  -e "GRANT ALL PRIVILEGES ON \`{{ LICENSE_MANAGER_MYSQL_DATABASE }}\`.* TO '{{ LICENSE_MANAGER_MYSQL_USERNAME }}'@'%'; FLUSH PRIVILEGES;"
 
 echo "MySQL initialization for license_manager completed."
