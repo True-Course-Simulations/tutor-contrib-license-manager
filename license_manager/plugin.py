@@ -22,19 +22,26 @@ hooks.Filters.CONFIG_DEFAULTS.add_items(
 
         # Where to clone license-manager from when we build it ourselves
         #("LICENSE_MANAGER_REPOSITORY", "https://github.com/edx/license-manager.git"),
-        ("LICENSE_MANAGER_REPOSITORY", "https://github.com/openedx/license-manager.git"),
+        #("LICENSE_MANAGER_REPOSITORY", "https://github.com/openedx/license-manager.git"),
+        ("LICENSE_MANAGER_REPOSITORY", "https://github.com/True-Course-Simulations/license-manager"),
+        #("LICENSE_MANAGER_VERSION", "{{ OPENEDX_COMMON_VERSION | replace('/', '-') }}" ),
+        ("LICENSE_MANAGER_VERSION", "main" ),
+        
 
         # Tag we use when the plugin builds the image
         # NOTE: Docker tags cannot contain '/', so we sanitize the version.
+        # (
+        #     "LICENSE_MANAGER_BUILT_IMAGE",
+        #     "{{ DOCKER_REGISTRY }}{{ DOCKER_IMAGE_PREFIX }}license-manager:{{ OPENEDX_COMMON_VERSION | replace('/', '-') }}",
+        # ),
         (
             "LICENSE_MANAGER_BUILT_IMAGE",
             "{{ DOCKER_REGISTRY }}{{ DOCKER_IMAGE_PREFIX }}license-manager:{{ OPENEDX_COMMON_VERSION | replace('/', '-') }}",
         ),
 
+
         # Optional external image. If empty => we build LICENSE_MANAGER_BUILT_IMAGE.
         ("LICENSE_MANAGER_DOCKER_IMAGE", ""),
-
-        ("LICENSE_MANAGER_VERSION", __version__),
         ("LICENSE_MANAGER_HOST", "subscriptions.{{ LMS_HOST }}"),
         ("LICENSE_MANAGER_MYSQL_DATABASE", "license_manager"),
         ("LICENSE_MANAGER_MYSQL_USERNAME", "license_manager"),
