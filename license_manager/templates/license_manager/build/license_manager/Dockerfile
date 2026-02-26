@@ -18,7 +18,7 @@ LABEL maintainer="Lawrence McDaniel <lpm0073@gmail.com>"
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt update && \
     apt install -y build-essential curl git language-pack-en
-ENV LC_ALL en_US.UTF-8
+ENV LC_ALL=en_US.UTF-8
 
 {{ patch("license-manager-dockerfile-minimal") }}
 
@@ -32,7 +32,7 @@ RUN apt update && \
 
 # Updated Python version to support Sumac-era dependencies
 ARG PYTHON_VERSION=3.11.9
-ENV PYENV_ROOT /opt/pyenv
+ENV PYENV_ROOT=/opt/pyenv
 RUN git clone https://github.com/pyenv/pyenv $PYENV_ROOT
 RUN $PYENV_ROOT/bin/pyenv install $PYTHON_VERSION
 RUN $PYENV_ROOT/versions/$PYTHON_VERSION/bin/python -m venv /openedx/venv
@@ -50,16 +50,16 @@ RUN dockerize_url="https://github.com/powerman/dockerize/releases/download/$DOCK
 # mcdaniel aug-2022: basing this section on the Tutor ecommerce plugin
 # see: https://github.com/overhangio/tutor-ecommerce/blob/master/tutorecommerce/templates/ecommerce/build/ecommerce/Dockerfile
 FROM minimal AS code
-ARG LICENSE_MANAGER_REPOSITORY=https://github.com/openedx/license-manager.git
-ARG LICENSE_MANAGER_VERSION={{ OPENEDX_COMMON_VERSION }}
+ARG LICENSE_MANAGER_REPOSITORY={{ LICENSE_MANAGER_REPOSITORY }}
+ARG LICENSE_MANAGER_VERSION={{ LICENSE_MANAGER_VERSION }}
 RUN mkdir -p /openedx/license_manager && \
     git clone $LICENSE_MANAGER_REPOSITORY --branch $LICENSE_MANAGER_VERSION --depth 1 /openedx/license_manager
 WORKDIR /openedx/license_manager
 
 ###### Install python requirements in virtualenv
 FROM python AS python-requirements
-ENV PATH /openedx/venv/bin:${PATH}
-ENV VIRTUAL_ENV /openedx/venv/
+ENV PATH=/openedx/venv/bin:${PATH}
+ENV VIRTUAL_ENV=/openedx/venv/
 
 RUN apt update && apt install -y software-properties-common libmysqlclient-dev libxmlsec1-dev libgeos-dev
 
@@ -117,8 +117,8 @@ COPY --chown=app:app --from=python-requirements /openedx/venv /openedx/venv
 COPY --chown=app:app --from=python-requirements /openedx/requirements /openedx/requirements
 COPY --chown=app:app ./apps/subscriptions/management/commands/*.py /openedx/license_manager/license_manager/apps/subscriptions/management/commands/
 
-ENV PATH /openedx/venv/bin:${PATH}
-ENV VIRTUAL_ENV /openedx/venv/
+ENV PATH=/openedx/venv/bin:${PATH}
+ENV VIRTUAL_ENV=/openedx/venv/
 WORKDIR /openedx/license_manager
 
 # Re-install local requirements, otherwise egg-info folders are missing
@@ -126,7 +126,7 @@ WORKDIR /openedx/license_manager
 
 ###### Setup minimal yml config file, which is required by tutor.production settings
 RUN echo "{}" > /openedx/config.yml
-ENV LICENSE_MANAGER_CFG /openedx/config.yml
+ENV LICENSE_MANAGER_CFG=/openedx/config.yml
 
 {{ patch("license-manager-dockerfile-pre-assets") }}
 
@@ -147,7 +147,7 @@ ENV LICENSE_MANAGER_CFG /openedx/config.yml
 RUN DJANGO_SETTINGS_MODULE=license_manager.settings.production \
     python3 manage.py collectstatic --noinput
 
-ENV DJANGO_SETTINGS_MODULE license_manager.settings.tutor.production
+ENV DJANGO_SETTINGS_MODULE=license_manager.settings.tutor.production
 
 {{ patch("license-manager-dockerfile") }}
 
@@ -157,9 +157,6 @@ EXPOSE 8000
 FROM production AS final
 
 # Run server with Gunicorn instead of uWSGI
-CMD gunicorn \
-    --bind 0.0.0.0:8000 \
-    --workers=${GUNICORN_WORKERS:-2} \
-    license_manager.wsgi:application
+CMD ["sh", "-c", "exec gunicorn --bind 0.0.0.0:8000 --workers=${GUNICORN_WORKERS:-2} license_manager.wsgi:application"]
 
 {{ patch("license-manager-dockerfile-final") }}
